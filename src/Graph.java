@@ -7,6 +7,7 @@ import java.util.HashMap;
 public class Graph {
     private HashMap<Pair<Integer>, Double> edges;
     private int n_vertices;
+
     Graph(File f) throws IOException {
         this.edges = new HashMap<>();
         BufferedReader reader = new BufferedReader(new FileReader(f));
@@ -42,5 +43,9 @@ public class Graph {
 
     public double distance_between(Pair<Integer> p) {
         return distance_between(p.x, p.y);
+    }
+
+    public int n_of_vertices() {
+        return n_vertices;
     }
 }

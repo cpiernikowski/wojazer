@@ -1,21 +1,25 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
+import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) throws IOException {
         Graph g = new Graph(new File("in.txt"));
 
-        for (Map.Entry<Pair<Integer>, Double> s : g.get_edges().entrySet()) {
-            System.out.println(s);
-        }
+        int[] ch = GeneticAlgorithm.random_tsp_solution(g.n_of_vertices());
 
-        System.out.println(g.distance_between(2, 3));
-        System.out.println(g.distance_between(3,2));
+        System.out.println(Arrays.toString(ch));
+        double d_sztywno = g.distance_between(ch[0], ch[1])
+                           + g.distance_between(ch[1], ch[2])
+                           + g.distance_between(ch[2], ch[3])
+                           + g.distance_between(ch[3], ch[4])
+                           + g.distance_between(ch[4], ch[0]);
+
+        double d_fn = GeneticAlgorithm.chromosome_fitness(ch, g);
+
+        assert d_sztywno == d_fn;
+
+        System.out.println(d_sztywno);
+        System.out.println(d_fn);
     }
 }
