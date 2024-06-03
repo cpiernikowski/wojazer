@@ -1,4 +1,4 @@
-import java.util.Random;
+import java.util.*;
 
 public class GeneticAlgorithm {
 
@@ -43,5 +43,123 @@ public class GeneticAlgorithm {
         out += g.distance_between(ch[ch.length - 1], ch[0]);
 
         return out;
+    }
+
+    public static void main(String[] args) {
+        // test pmxa
+        int[] parent1 = {1, 2, 3, 5, 4};
+        int[] parent2 = {3, 4, 5, 2, 1};
+
+        int[][] offspring = PMX.PMX_fun(parent1, parent2);
+
+        System.out.println("Offspring 1: " + Arrays.toString(offspring[0]));
+        System.out.println("Offspring 2: " + Arrays.toString(offspring[1]));
+    }
+
+
+    public static class PMX {
+        static int[] offspring1;
+        static int[] offspring2;
+        static int[] segment1;
+        static int[] segment2;
+        static int cutPoint1;
+        static int cutPoint2;
+        public static int[][] PMX_fun(int[] parent1, int[] parent2) {
+            Random firstRNum = new Random();
+            Random secondRNum = new Random();
+
+            int randomNo_Boundary = (parent1.length) - 1;
+            offspring1 = new int[parent1.length];
+            offspring2 = new int[parent2.length];
+            cutPoint1 = firstRNum.nextInt(randomNo_Boundary);
+            cutPoint2 = secondRNum.nextInt(randomNo_Boundary);
+
+
+            while (cutPoint1 == cutPoint2) {
+                cutPoint2 = secondRNum.nextInt(randomNo_Boundary);
+            }
+            if (cutPoint1 > cutPoint2) {
+                int temp = cutPoint1;
+                cutPoint1 = cutPoint2;
+                cutPoint2 = temp;
+            }
+            System.out.println(cutPoint1 + " " + cutPoint2);
+            create_Segments(parent1, parent2, cutPoint1, cutPoint2);
+            crossOver(offspring1, parent1, parent2);
+            crossOver(offspring2, parent2, parent1);
+
+            return new int[][]{offspring1, offspring2};
+
+
+        }
+        private static boolean check_forDuplicates(int[] offspring, int indexOfElement) {
+            for (int index = 0; index < offspring.length; index++) {
+                if ((offspring[index] == offspring[indexOfElement]) &&
+                        (indexOfElement != index)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static void sort_Duplicates(int[] offspring, int indexOfElement) {
+            for (int index = 0; index < segment1.length; index++) {
+                if (segment1[index] == offspring[indexOfElement]) {
+                    offspring[indexOfElement] = segment2[index];
+                } else if (segment2[index] == offspring[indexOfElement]) {
+                    offspring[indexOfElement] = segment1[index];
+                }
+            }
+        }
+
+        private static void create_Segments(int[] parent1, int[] parent2, int cutPoint1, int cutPoint2) {
+            int capacity_ofSegments = (cutPoint2 - cutPoint1) + 1;
+            segment1 = new int[capacity_ofSegments];
+            segment2 = new int[capacity_ofSegments];
+            int segment1and2Index = 0;
+            for (int index = 0; index < parent1.length; index++) {
+                if ((index >= cutPoint1) && (index <= cutPoint2)) {
+                    int x = parent1[index];
+                    int y = parent2[index];
+                    segment1[segment1and2Index] = x;
+                    segment2[segment1and2Index] = y;
+                    segment1and2Index++;
+                }
+            }
+        }
+
+        private static void insert_Segments(int[] offspring, int[] segment) {
+            int segmentIndex = 0;
+            for (int index = 0; index < offspring.length; index++) {
+                if ((index >= cutPoint1) && (index <= cutPoint2)) {
+                    offspring[index] = segment[segmentIndex];
+                    segmentIndex++;
+                }
+            }
+        }
+
+        public static void crossOver(int[] offspring, int[] parentX, int[] parentY) {
+            if (offspring == offspring1) {
+                int[] segment = segment2;
+                insert_Segments(offspring, segment);
+            } else if (offspring == offspring2) {
+                int[] segment = segment1;
+                insert_Segments(offspring, segment);
+            }
+
+            for (int index = 0; index < offspring.length; index++) {
+                if ((index < cutPoint1) || (index > cutPoint2)) {
+                    offspring[index] = parentX[index];
+                }
+            }
+
+            for (int index = 0; index < offspring.length; index++) {
+                if ((index < cutPoint1) || (index > cutPoint2)) {
+                    while (check_forDuplicates(offspring, index)) {
+                        sort_Duplicates(offspring, index);
+                    }
+                }
+            }
+        }
     }
 }
