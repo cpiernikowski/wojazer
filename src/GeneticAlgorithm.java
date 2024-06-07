@@ -80,15 +80,17 @@ public class GeneticAlgorithm {
         int[][] pop = create_population(n_pop, cm.n_of_vertices());
         int[] best = null;
         double min = Double.MAX_VALUE;
+        int found_min_iter_n = 0;
 
         for (int i = 0; i < n_iters; ++i) {
             // znajdz minimum - najlepszego osobnika dotychczas
             for (int j = 0; j < pop.length; ++j) {
                 double y = chromosome_fitness(pop[j], cm);
-                System.out.println("==Test: iteracja nr: " + i + " chromosom: " + Arrays.toString(pop[j]) + " y: " + y + " obecne min: " + min);
+                //System.out.println("==Test: iteracja nr: " + i + " chromosom: " + Arrays.toString(pop[j]) + " y: " + y + " obecne min: " + min);
                 if (min > y) {
                     min = y;
                     best = Arrays.copyOf(pop[j], pop[j].length);
+                    found_min_iter_n = i;
                 }
             }
 
@@ -115,6 +117,7 @@ public class GeneticAlgorithm {
             // ruletka tu
         }
 
+        System.out.println("Znalezione minimum podczas iteracji nr " + found_min_iter_n + ", dla wielkosci populacji " + n_pop);
         return best;
     }
 
@@ -156,7 +159,7 @@ public class GeneticAlgorithm {
                 cutPoint1 = cutPoint2;
                 cutPoint2 = temp;
             }
-            System.out.println(cutPoint1 + " " + cutPoint2);
+            //System.out.println(cutPoint1 + " " + cutPoint2);
             create_Segments(parent1, parent2, cutPoint1, cutPoint2);
             crossOver(offspring1, parent1, parent2);
             crossOver(offspring2, parent2, parent1);

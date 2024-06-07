@@ -49,10 +49,36 @@ public class Main {
 
         pw.close();
     }
+
+    public static void test_zaleznosci(CitiesMap cm) {
+        final int n_iteracji = 10;
+
+        System.out.println("Test z pm=" + GeneticAlgorithm.pm + " i " + "pc=" + GeneticAlgorithm.pc);
+        GeneticAlgorithm.ga(10, n_iteracji, cm, GeneticAlgorithm.pm, GeneticAlgorithm.pc);
+        GeneticAlgorithm.ga(15, n_iteracji, cm, GeneticAlgorithm.pm, GeneticAlgorithm.pc);
+        GeneticAlgorithm.ga(20, n_iteracji, cm, GeneticAlgorithm.pm, GeneticAlgorithm.pc);
+        GeneticAlgorithm.ga(30, n_iteracji, cm, GeneticAlgorithm.pm, GeneticAlgorithm.pc);
+
+        System.out.println("Test z pm=" + 0.5 + " i " + "pc=" + 0.5);
+        GeneticAlgorithm.ga(10, n_iteracji, cm, 0.5, 0.5);
+        GeneticAlgorithm.ga(15, n_iteracji, cm, 0.5, 0.5);
+        GeneticAlgorithm.ga(20, n_iteracji, cm, 0.5, 0.5);
+        GeneticAlgorithm.ga(30, n_iteracji, cm, 0.5, 0.5);
+        /*
+            Jako że liczba permutacji rozwiązań dla naszego pliku wejsciowego nie jest zbyt wysoka,
+            to algorytm szybko znajduje najlepszą ścieżkę, często już w pierwszej iteracji,
+            po wielu wywołaniach testu można zauważyć, że ilość iteracji potrzebnych do znalezienia najlepszej drogi
+            dla tego pliku wejściowego rzadko przekracza 5; nie widać zależności pomiędzy szybkością znalezienia najlepszego rozwiązania,
+            a prawdopodobieństwem mutacji i krosowania, natomiast czym większa ilość populacji, tym większe prawdopodobieństwo na to, że
+            szybciej znajdziemy optymalną ścieżkę.
+        */
+    }
+
     public static void main(String[] args) throws IOException {
         CitiesMap cm = new CitiesMap(new File("in.txt"));
 
         int[] min = GeneticAlgorithm.ga(10, 5, cm, GeneticAlgorithm.pm, GeneticAlgorithm.pc);
         save_result(min, cm);
+        test_zaleznosci(cm);
     }
 }
