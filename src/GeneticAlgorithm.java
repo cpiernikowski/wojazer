@@ -2,6 +2,10 @@ import java.util.*;
 
 public class GeneticAlgorithm {
 
+    // default
+    static final double pm = 0.2;
+    static final double pc = 0.2;
+
     public static class Util {
         public static boolean contains(int[] haystack, int needle) {
             for (int e : haystack) {
@@ -32,17 +36,86 @@ public class GeneticAlgorithm {
         return out;
     }
 
-    public static double chromosome_fitness(int[] ch, Graph g) {
-        assert ch.length <= g.n_of_vertices();
+    public static int[] mutate(int[] ch) {
+        // zamienia miejscami dwa geny w chromosomie
+        Random rnd = new Random();
+        int idxa = rnd.nextInt(ch.length);
+        int idxb = rnd.nextInt(ch.length);
+
+        while (idxa == idxb) {
+            idxb = rnd.nextInt(ch.length);
+        }
+
+        int tmp = ch[idxa];
+        ch[idxa] = ch[idxb];
+        ch[idxb] = tmp;
+
+        return ch;
+    }
+
+    public static double chromosome_fitness(int[] ch, CitiesMap cm) {
+        assert ch.length <= cm.n_of_vertices();
         double out = 0.0;
 
         for (int i = 0; i < ch.length - 1; ++i) {
-            out += g.distance_between(ch[i], ch[i + 1]);
+            out += cm.distance_between(ch[i], ch[i + 1]);
         }
 
-        out += g.distance_between(ch[ch.length - 1], ch[0]);
+        out += cm.distance_between(ch[ch.length - 1], ch[0]);
 
         return out;
+    }
+
+    public static int[][] create_population(int n, int max) {
+        int[][] out = new int[n][max];
+
+        for (int i = 0; i < n; ++i) {
+            out[i] = random_tsp_solution(max);
+        }
+
+        return out;
+    }
+
+    public static int[] ga(int n_pop, int n_iters, CitiesMap cm, double pm, double pc) {
+        int[][] pop = create_population(n_pop, cm.n_of_vertices());
+        int[] best = null;
+        double min = Double.MAX_VALUE;
+
+        for (int i = 0; i < n_iters; ++i) {
+            // znajdz minimum - najlepszego osobnika dotychczas
+            for (int j = 0; j < pop.length; ++j) {
+                double y = chromosome_fitness(pop[j], cm);
+                System.out.println("==Test: iteracja nr: " + i + " chromosom: " + Arrays.toString(pop[j]) + " y: " + y + " obecne min: " + min);
+                if (min > y) {
+                    min = y;
+                    best = Arrays.copyOf(pop[j], pop[j].length);
+                }
+            }
+
+            for (int j = 0; j < pop.length; ++j) {
+                Random rnd = new Random();
+                double current_pm = rnd.nextDouble(0, 1);
+                double current_pc = rnd.nextDouble(0, 1);
+
+                if (current_pm <= pm) {
+                    pop[j] = mutate(pop[j]);
+                }
+
+                if (current_pc <= pc) {
+                    int second_idx_cross = rnd.nextInt(0, pop.length);
+                    while (second_idx_cross == j) {
+                        second_idx_cross = rnd.nextInt(0, pop.length);
+                    }
+
+                    int[][] pmx_result = PMX.PMX_fun(pop[j], pop[second_idx_cross]);
+                    pop[j] = pmx_result[0];
+                    pop[second_idx_cross] = pmx_result[1];
+                }
+            }
+            // ruletka tu
+        }
+
+        return best;
     }
 
     public static void main(String[] args) {

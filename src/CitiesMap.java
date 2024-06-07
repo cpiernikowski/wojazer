@@ -36,7 +36,7 @@ public class CitiesMap {
     }
     public double distance_between(int a, int b) {
         assert a <= this.n_vertices && b <= this.n_vertices;
-        return this.mat[a][b];
+        return this.mat[a - 1][b - 1];
     }
 
     public int n_of_vertices() {
