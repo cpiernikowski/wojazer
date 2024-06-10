@@ -76,24 +76,32 @@ public class GeneticAlgorithm {
         return out;
     }
 
+    public static double[] bestFitness(int[][] pop, CitiesMap cm, int[] bestIndividual, double[] minFitness) {
+        double[] fitnessValues = new double[pop.length];
+        for (int j = 0; j < pop.length; ++j) {
+            double fitness = chromosome_fitness(pop[j], cm);
+            fitnessValues[j] = fitness;
+            if (fitness < minFitness[0]) {
+                minFitness[0] = fitness;
+                System.arraycopy(pop[j], 0, bestIndividual, 0, pop[j].length);
+            }
+        }
+        return fitnessValues;
+    }
+
+
     public static int[] ga(int n_pop, int n_iters, CitiesMap cm, double pm, double pc) {
         int[][] pop = create_population(n_pop, cm.n_of_vertices());
-        int[] best = null;
-        double min = Double.MAX_VALUE;
+        int[] best = new int[cm.n_of_vertices()];
+        double[] min = new double[]{Double.MAX_VALUE};
         int found_min_iter_n = 0;
 
         for (int i = 0; i < n_iters; ++i) {
             // znajdz minimum - najlepszego osobnika dotychczas
-            for (int j = 0; j < pop.length; ++j) {
-                double y = chromosome_fitness(pop[j], cm);
-                //System.out.println("==Test: iteracja nr: " + i + " chromosom: " + Arrays.toString(pop[j]) + " y: " + y + " obecne min: " + min);
-                if (min > y) {
-                    min = y;
-                    best = Arrays.copyOf(pop[j], pop[j].length);
-                    found_min_iter_n = i;
-                }
-            }
-
+            double[] fitnessValues = bestFitness(pop, cm, best, min);
+            
+            pop = PMX.selectionByRoulette(pop, fitnessValues);
+            
             for (int j = 0; j < pop.length; ++j) {
                 Random rnd = new Random();
                 double current_pm = rnd.nextDouble(0, 1);
@@ -114,7 +122,6 @@ public class GeneticAlgorithm {
                     pop[second_idx_cross] = pmx_result[1];
                 }
             }
-            // ruletka tu
         }
 
         System.out.println("Znalezione minimum podczas iteracji nr " + found_min_iter_n + ", dla wielkosci populacji " + n_pop);
@@ -236,6 +243,42 @@ public class GeneticAlgorithm {
                     }
                 }
             }
+        }
+        public static int[][] selectionByRoulette(int[][] population, double[] fitnessValues) {
+            double totalFitness = 0.0;
+            double[] probabilities = new double[fitnessValues.length];
+
+            // Calculate total fitness
+            for (double fitness : fitnessValues) {
+                totalFitness += 1.0 / fitness;
+            }
+
+            // Calculate selection probabilities
+            for (int i = 0; i < fitnessValues.length; i++) {
+                probabilities[i] = (1.0 / fitnessValues[i]) / totalFitness;
+            }
+
+            // Cumulative probabilities
+            double[] cumulativeProbabilities = new double[probabilities.length];
+            cumulativeProbabilities[0] = probabilities[0];
+            for (int i = 1; i < probabilities.length; i++) {
+                cumulativeProbabilities[i] = cumulativeProbabilities[i - 1] + probabilities[i];
+            }
+
+            // Select individuals based on roulette wheel
+            int[][] selectedPopulation = new int[population.length][];
+            Random random = new Random();
+            for (int i = 0; i < population.length; i++) {
+                double rand = random.nextDouble();
+                for (int j = 0; j < cumulativeProbabilities.length; j++) {
+                    if (rand <= cumulativeProbabilities[j]) {
+                        selectedPopulation[i] = Arrays.copyOf(population[j], population[j].length);
+                        break;
+                    }
+                }
+            }
+
+            return selectedPopulation;
         }
     }
 }
