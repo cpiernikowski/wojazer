@@ -34,6 +34,7 @@ public class CitiesMap {
     public double[][] get_mat() {
         return this.mat;
     }
+
     public double distance_between(int a, int b) {
         assert a <= this.n_vertices && b <= this.n_vertices;
         return this.mat[a - 1][b - 1];
@@ -41,5 +42,18 @@ public class CitiesMap {
 
     public int n_of_vertices() {
         return n_vertices;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Cities Map:\n");
+        for (int i = 0; i < n_vertices; i++) {
+            for (int j = 0; j < n_vertices; j++) {
+                sb.append(mat[i][j]).append(" ");
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 }

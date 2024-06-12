@@ -1,3 +1,5 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class GeneticAlgorithm {
@@ -76,17 +78,18 @@ public class GeneticAlgorithm {
         return out;
     }
 
-    public static double[] bestFitness(int[][] pop, CitiesMap cm, int[] bestIndividual, double[] minFitness) {
-        double[] fitnessValues = new double[pop.length];
+    public static double bestFitness(int[][] pop, CitiesMap cm, int[] bestIndividual, double[] minFitness) {
         for (int j = 0; j < pop.length; ++j) {
-            double fitness = chromosome_fitness(pop[j], cm);
-            fitnessValues[j] = fitness;
+            double fitness = chromosome_fitness(pop[j], cm); // Calculate fitness of the j-th individual
+
+            // Check if the current individual is the best one found so far
             if (fitness < minFitness[0]) {
-                minFitness[0] = fitness;
-                System.arraycopy(pop[j], 0, bestIndividual, 0, pop[j].length);
+                minFitness[0] = fitness; // Update the minimum fitness value
+                System.arraycopy(pop[j], 0, bestIndividual, 0, pop[j].length); // Copy the best individual to bestIndividual array
             }
         }
-        return fitnessValues;
+
+        return minFitness[0]; // Return the minimum fitness value
     }
 
 
@@ -94,37 +97,60 @@ public class GeneticAlgorithm {
         int[][] pop = create_population(n_pop, cm.n_of_vertices());
         int[] best = new int[cm.n_of_vertices()];
         double[] min = new double[]{Double.MAX_VALUE};
-        int found_min_iter_n = 0;
+        int temp = n_iters/20;
 
-        for (int i = 0; i < n_iters; ++i) {
-            // znajdz minimum - najlepszego osobnika dotychczas
-            double[] fitnessValues = bestFitness(pop, cm, best, min);
-            
-            pop = PMX.selectionByRoulette(pop, fitnessValues);
-            
-            for (int j = 0; j < pop.length; ++j) {
-                Random rnd = new Random();
-                double current_pm = rnd.nextDouble(0, 1);
-                double current_pc = rnd.nextDouble(0, 1);
+        int[][] populationClone;
+        double[][] allBestFitness = new double[50][n_iters / temp + 1];
+        for (int run = 0; run < 50; run++) {
+            best = new int[cm.n_of_vertices()];
+            min = new double[]{Double.MAX_VALUE};
+            populationClone = pop;
+            double runBestFitness = Double.MAX_VALUE; // Initialize run-specific best fitness
 
-                if (current_pm <= pm) {
-                    pop[j] = mutate(pop[j]);
+            for (int i = 0; i < n_iters; ++i) {
+                double bestFitness = bestFitness(populationClone, cm, best, min);
+
+                if ((i % temp) == 0) {
+                    runBestFitness = Math.min(runBestFitness, bestFitness); // Update run-specific best fitness
+                    allBestFitness[run][i / temp] = runBestFitness;
+                    System.out.println("Run " + (run + 1) + ", Iteracja " + i + " - Best fitness: " + bestFitness);
                 }
 
-                if (current_pc <= pc) {
-                    int second_idx_cross = rnd.nextInt(0, pop.length);
-                    while (second_idx_cross == j) {
-                        second_idx_cross = rnd.nextInt(0, pop.length);
+                //populationClone = PMX.selectionByRoulette(populationClone, cm);
+                populationClone = PMX.selectionByTournament(populationClone, cm,3);
+
+                for (int j = 0; j < populationClone.length; ++j) {
+                    Random rnd = new Random();
+                    double current_pm = rnd.nextDouble(0, 1);
+                    double current_pc = rnd.nextDouble(0, 1);
+
+                    if (current_pm <= pm) {
+                        populationClone[j] = mutate(populationClone[j]);
                     }
 
-                    int[][] pmx_result = PMX.PMX_fun(pop[j], pop[second_idx_cross]);
-                    pop[j] = pmx_result[0];
-                    pop[second_idx_cross] = pmx_result[1];
+                    if (current_pc <= pc) {
+                        int second_idx_cross = rnd.nextInt(0, populationClone.length);
+                        while (second_idx_cross == j) {
+                            second_idx_cross = rnd.nextInt(0, populationClone.length);
+                        }
+
+                        int[][] pmx_result = PMX.PMX_fun(populationClone[j], populationClone[second_idx_cross]);
+                        populationClone[j] = pmx_result[0];
+                        populationClone[second_idx_cross] = pmx_result[1];
+                    }
                 }
             }
         }
 
-        System.out.println("Znalezione minimum podczas iteracji nr " + found_min_iter_n + ", dla wielkosci populacji " + n_pop);
+        try (FileWriter writer = new FileWriter("best_fitness.txt")) {
+            for (int run = 0; run < 50; run++) {
+                for (int i = 0; i <= n_iters / temp; i++) {
+                    writer.write("Run: " + (run + 1) + ", Iteracja: " + (i * temp) + ", Best fitness: " + allBestFitness[run][i] + "\n");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return best;
     }
 
@@ -244,18 +270,25 @@ public class GeneticAlgorithm {
                 }
             }
         }
-        public static int[][] selectionByRoulette(int[][] population, double[] fitnessValues) {
+        public static int[][] selectionByRoulette(int[][] population, CitiesMap cm) {
+            double[] fitnessValues = new double[population.length];
+
+            // Oblicz fitness dla każdej jednostki w populacji
+            for (int i = 0; i < population.length; i++) {
+                fitnessValues[i] = 1.0 / chromosome_fitness(population[i], cm); // Używamy odwrotności długości trasy
+            }
+
             double totalFitness = 0.0;
             double[] probabilities = new double[fitnessValues.length];
 
             // Calculate total fitness
             for (double fitness : fitnessValues) {
-                totalFitness += 1.0 / fitness;
+                totalFitness += fitness;
             }
 
             // Calculate selection probabilities
             for (int i = 0; i < fitnessValues.length; i++) {
-                probabilities[i] = (1.0 / fitnessValues[i]) / totalFitness;
+                probabilities[i] = fitnessValues[i] / totalFitness;
             }
 
             // Cumulative probabilities
@@ -276,6 +309,39 @@ public class GeneticAlgorithm {
                         break;
                     }
                 }
+            }
+
+            return selectedPopulation;
+        }
+        public static int[][] selectionByTournament(int[][] population, CitiesMap cm, int tournamentSize) {
+            int[][] selectedPopulation = new int[population.length][];
+            Random random = new Random();
+            double[] fitnessValues = new double[population.length];
+
+            // Calculate fitness values
+            for (int i = 0; i < population.length; i++) {
+                fitnessValues[i] = chromosome_fitness(population[i], cm);
+            }
+
+            for (int i = 0; i < population.length; i++) {
+                // Select random individuals for the tournament
+                int[] tournamentParticipants = new int[tournamentSize];
+                for (int j = 0; j < tournamentSize; j++) {
+                    tournamentParticipants[j] = random.nextInt(population.length);
+                }
+
+                // Find the winner of the tournament (individual with the lowest fitness value)
+                int winnerIndex = tournamentParticipants[0];
+                double minFitness = fitnessValues[tournamentParticipants[0]];
+                for (int participantIndex : tournamentParticipants) {
+                    if (fitnessValues[participantIndex] < minFitness) {
+                        minFitness = fitnessValues[participantIndex];
+                        winnerIndex = participantIndex;
+                    }
+                }
+
+                // Add the winner to the selected population
+                selectedPopulation[i] = Arrays.copyOf(population[winnerIndex], population[winnerIndex].length);
             }
 
             return selectedPopulation;
