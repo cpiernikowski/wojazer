@@ -79,7 +79,7 @@ public class Main {
         CitiesMap cm = new CitiesMap(citiesFile);
         System.out.println(cm.toString());
 
-        int[] min = GeneticAlgorithm.ga(1000, 100, cm, GeneticAlgorithm.pm, GeneticAlgorithm.pc);
+        int[] min = GeneticAlgorithm.ga(1000, 100, cm, GeneticAlgorithm.pm, GeneticAlgorithm.pc, true);
         save_result(min, cm);
        // test_zaleznosci(cm);
     }

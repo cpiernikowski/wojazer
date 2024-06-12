@@ -93,7 +93,7 @@ public class GeneticAlgorithm {
     }
 
 
-    public static int[] ga(int n_pop, int n_iters, CitiesMap cm, double pm, double pc) {
+    public static int[] ga(int n_pop, int n_iters, CitiesMap cm, double pm, double pc, boolean Roulette) {
         int[][] pop = create_population(n_pop, cm.n_of_vertices());
         int[] best = new int[cm.n_of_vertices()];
         double[] min = new double[]{Double.MAX_VALUE};
@@ -116,8 +116,10 @@ public class GeneticAlgorithm {
                     System.out.println("Run " + (run + 1) + ", Iteracja " + i + " - Best fitness: " + bestFitness);
                 }
 
-                //populationClone = PMX.selectionByRoulette(populationClone, cm);
-                populationClone = PMX.selectionByTournament(populationClone, cm,3);
+                if(Roulette)
+                    populationClone = PMX.selectionByRoulette(populationClone, cm);
+                else
+                    populationClone = PMX.selectionByTournament(populationClone, cm,3);
 
                 for (int j = 0; j < populationClone.length; ++j) {
                     Random rnd = new Random();
